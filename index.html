@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>音遊会 スタッフラリー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF0F8; --ink:#1E2240; --sub:#5B6080; --surface:#FFFFFF; --line:#D3D7EA;
+  --stage:#1E2240; --empty:#E3E6F3;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#141729; --ink:#EEF0FA; --sub:#A3A8C7; --surface:#1F2340; --line:#353B66;
+    --stage:#0C0E1E; --empty:#262B4D; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141729; --ink:#EEF0FA; --sub:#A3A8C7; --surface:#1F2340; --line:#353B66;
+  --stage:#0C0E1E; --empty:#262B4D; color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",sans-serif;
+  font-weight:500; line-height:1.7; -webkit-text-size-adjust:100%;
+}
+main{max-width:520px;margin:0 auto;padding:28px 18px 56px}
+h1{font-size:clamp(2rem,9vw,2.6rem);font-weight:900;line-height:1.15;margin:0 0 12px;letter-spacing:.02em}
+h1 small{display:block;font-size:.45em;font-weight:700;color:var(--sub);letter-spacing:.08em;margin-bottom:6px}
+.lead{margin:0 0 24px;color:var(--sub)}
+h2{font-size:1.25rem;font-weight:900;margin:40px 0 12px}
+
+/* puzzle board */
+.board{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:6px;
+  aspect-ratio:3/2;width:100%;transition:gap .6s ease;
+}
+.tile{
+  position:relative;border-radius:10px;overflow:hidden;
+  background:var(--empty);
+  display:grid;place-items:center;text-align:center;
+  border:2px dashed color-mix(in srgb,var(--c) 55%,transparent);
+  transition:border-radius .6s ease;
+}
+.tile .q{font-size:1.8rem;font-weight:900;color:var(--c);line-height:1}
+.tile .who{font-size:.72rem;color:var(--sub);margin-top:2px}
+.tile.got{
+  border:0;
+  background-image:var(--img);background-size:300% 200%;
+  background-position:var(--pos);
+}
+.tile.got > *{display:none}
+.tile.just{animation:flip .7s ease}
+@keyframes flip{
+  0%{transform:perspective(600px) rotateY(90deg) scale(.9)}
+  100%{transform:perspective(600px) rotateY(0) scale(1)}
+}
+.board.complete{gap:0}
+.board.complete .tile{border-radius:0}
+.board.complete .tile:nth-child(1){border-top-left-radius:14px}
+.board.complete .tile:nth-child(3){border-top-right-radius:14px}
+.board.complete .tile:nth-child(4){border-bottom-left-radius:14px}
+.board.complete .tile:nth-child(6){border-bottom-right-radius:14px}
+
+/* staff penlights */
+.status{margin:18px 0 0;font-weight:700;font-size:1.05rem}
+.lights{list-style:none;display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:0;margin:12px 0 0}
+.lights li{text-align:center;font-size:.7rem;color:var(--sub)}
+.lights .stick{
+  display:block;width:14px;height:44px;margin:0 auto 4px;border-radius:7px;
+  background:var(--line);
+}
+.lights li.on .stick{background:var(--c);box-shadow:0 0 14px var(--c)}
+.lights li.on{color:var(--ink);font-weight:700}
+.hint{font-size:.85rem;color:var(--sub);margin:14px 0 0}
+
+/* complete panel */
+.done{display:none;margin-top:24px;padding:20px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.done.show{display:block}
+.done h3{margin:0 0 4px;font-size:1.4rem;font-weight:900}
+.done p{margin:0 0 14px;color:var(--sub)}
+label{display:block;font-size:.85rem;font-weight:700;margin:10px 0 4px}
+input[type=text]{
+  width:100%;font:inherit;padding:10px 12px;border-radius:10px;
+  border:1px solid var(--line);background:var(--bg);color:var(--ink);
+}
+button{
+  font:inherit;font-weight:700;cursor:pointer;border-radius:999px;
+  border:0;padding:12px 22px;background:var(--ink);color:var(--bg);
+}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #7C5CFF;outline-offset:2px}
+.done button{margin-top:14px;width:100%}
+.posted{font-weight:700;color:var(--ink)!important}
+
+/* footprints wall */
+.count{margin:0 0 10px;color:var(--sub)}
+.count b{font-size:1.6rem;color:var(--ink);font-weight:900;margin:0 2px}
+.stage{
+  position:relative;height:200px;border-radius:14px;overflow:hidden;
+  background:var(--stage);
+}
+.cmt{
+  position:absolute;left:100%;white-space:nowrap;font-weight:700;color:#fff;
+  font-size:1.05rem;
+  text-shadow:0 0 2px #000,0 0 2px #000,1px 1px 0 #000;
+  animation:flow linear forwards;
+}
+.cmt.mine{color:#FFE45C;font-size:1.25rem}
+@keyframes flow{to{transform:translateX(calc(-100vw - 100% - 520px))}}
+.stage-list{list-style:none;margin:0;padding:14px;color:#fff;max-height:200px;overflow:auto}
+.stage-list li{padding:2px 0}
+
+/* get dialog */
+dialog{
+  border:0;border-radius:18px;padding:24px;width:min(92vw,380px);
+  background:var(--surface);color:var(--ink);text-align:center;
+}
+dialog::backdrop{background:rgba(10,12,30,.6)}
+.got-light{width:22px;height:70px;border-radius:11px;margin:0 auto 14px;background:var(--c);box-shadow:0 0 24px var(--c)}
+dialog h3{margin:0;font-size:1.5rem;font-weight:900}
+dialog .msg{margin:10px 0 4px;padding:12px;border-radius:12px;background:var(--bg)}
+dialog .prog{color:var(--sub);margin:8px 0 18px}
+
+.toast{
+  position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:12px;
+  width:max-content;max-width:90vw;transition:.3s;font-size:.9rem;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* prototype panel */
+details.proto{margin-top:48px;padding:14px;border:1px dashed var(--line);border-radius:12px;font-size:.85rem}
+details.proto summary{cursor:pointer;font-weight:700}
+.proto-btns{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.proto code{font-size:.75rem;color:var(--sub);word-break:break-all}
+
+.confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:50}
+.confetti i{position:absolute;top:-20px;width:8px;height:14px;border-radius:2px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+
+@media (prefers-reduced-motion:reduce){
+  .tile.just{animation:none}
+  .board,.tile{transition:none}
+}
+</style>
+</head>
+<body>
+<main>
+  <h1><small>音遊会 in 超会議2027</small>スタッフラリー</h1>
+  <p class="lead">音遊会のスタッフ6人が、交代でブースに立ったり会場を歩き回ったりしています。見つけたらQRコードを読み取って、ピースを集めよう。6枚そろうと1枚の絵が完成します。</p>
+
+  <div class="board" id="board" aria-label="パズルボード"></div>
+
+  <p class="status" id="status"></p>
+  <ul class="lights" id="lights"></ul>
+  <p class="hint">ブースにいなくても、会場のどこかで会えるかも。見つからなくても大丈夫、のんびり楽しんでね。</p>
+
+  <section class="done" id="done" aria-live="polite">
+    <h3>コンプリート！</h3>
+    <p id="doneNo"></p>
+    <div id="formWrap">
+      <p>みんなの足あとに、ひとことを残していきませんか。</p>
+      <label for="nm">ニックネーム</label>
+      <input type="text" id="nm" maxlength="12" placeholder="例：ねこP">
+      <label for="ms">ひとこと</label>
+      <input type="text" id="ms" maxlength="30" placeholder="例：全員見つけた！楽しかった〜">
+      <button id="postBtn" type="button">足あとを残す</button>
+    </div>
+  </section>
+
+  <h2>みんなの足あと</h2>
+  <p class="count">これまでに<b id="cnt">0</b>人がコンプリートしました</p>
+  <div class="stage" id="stage" aria-label="コンプリートした人のひとこと"></div>
+
+  <details class="proto">
+    <summary>試作用：QRの読み取りを試す</summary>
+    <p>本番ではスタッフごとに違うQRコード（URL）を用意します。ここのボタンは読み取ったときの動きを再現します。</p>
+    <div class="proto-btns" id="protoBtns"></div>
+    <button class="ghost" id="resetBtn" type="button">進み具合をリセット</button>
+    <p>本番のURLの形：<br><code id="urlEx"></code></p>
+  </details>
+</main>
+
+<dialog id="getDlg">
+  <div class="got-light" id="dlgLight"></div>
+  <h3 id="dlgTitle"></h3>
+  <p class="msg" id="dlgMsg"></p>
+  <p class="prog" id="dlgProg"></p>
+  <button id="dlgClose" type="button">ボードを見る</button>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* ===== 設定：ここを書き換えればカスタマイズできます ===== */
+const STAFF = [
+  {code:'k7x9q2', name:'スタッフA', color:'#FF4F8B', msg:'見つけてくれてありがとう！超会議楽しんでね〜'},
+  {code:'m3p8w5', name:'スタッフB', color:'#FFB000', msg:'よく見つけたね！？ちょうど休憩中でした笑'},
+  {code:'r2d6t9', name:'スタッフC', color:'#22B8CF', msg:'会えてうれしい！ブースのグッズも見ていってね'},
+  {code:'h5n1v7', name:'スタッフD', color:'#7C5CFF', msg:'ピースゲット！残りのスタッフも探してみて'},
+  {code:'c9z4j3', name:'スタッフE', color:'#2FB463', msg:'いつも音遊会をありがとう！'},
+  {code:'f6b2y8', name:'スタッフF', color:'#FF6B3D', msg:'ここまで来てくれてありがとう、あと少し！'},
+];
+// 試作用のサンプル足あと（本番ではサーバーから読み込みます）
+const SAMPLE_WALL = [
+  {name:'ねこP', msg:'全員見つけた！楽しかった〜'},
+  {name:'みかん', msg:'Fさんがなかなか見つからなかったｗ'},
+  {name:'しろくま', msg:'音遊会いつもありがとう'},
+  {name:'ゆず', msg:'来年も来ます！'},
+  {name:'はるか', msg:'法被かわいかった'},
+  {name:'K', msg:'2日目でやっとコンプ'},
+  {name:'あめ', msg:'スタッフさんみんな優しい'},
+  {name:'ぽち', msg:'初めて超会議来たけど最高'},
+  {name:'りん', msg:'以心伝心の企画また参加したい'},
+  {name:'そら', msg:'ブースで歌い手さんに会えた！'},
+];
+/* ======================================================= */
+
+const KEY='onyukai-rally-v1', WALL_KEY='onyukai-rally-wall-v1';
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+
+function load(k,fb){try{const v=JSON.parse(localStorage.getItem(k));return v??fb}catch(e){return fb}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function newId(){return (crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2))}
+
+let state = load(KEY,{});
+state.id ||= newId();
+state.got ||= [];
+save(KEY,state);
+let myWall = load(WALL_KEY,[]);
+
+/* --- 完成図（仮）：差し替え時は画像URLを --img に入れるだけ --- */
+function finalSVG(){
+  let figs='';
+  STAFF.forEach((s,i)=>{
+    const x=70+i*92;
+    figs+=`
+    <line x1="${x+22}" y1="292" x2="${x+38}" y2="196" stroke="${s.color}" stroke-width="20" stroke-linecap="round" opacity=".35" filter="url(#g)"/>
+    <line x1="${x+22}" y1="292" x2="${x+38}" y2="196" stroke="${s.color}" stroke-width="8" stroke-linecap="round"/>
+    <rect x="${x-28}" y="276" width="56" height="90" rx="18" fill="${s.color}"/>
+    <rect x="${x-6}" y="276" width="12" height="90" fill="#fff" opacity=".35"/>
+    <circle cx="${x}" cy="248" r="27" fill="#FFE3D1"/>
+    <path d="M${x-27} 246 a27 27 0 0 1 54 0 q-27 -14 -54 0z" fill="#2B2440"/>
+    <circle cx="${x-9}" cy="252" r="3" fill="#2B2440"/>
+    <circle cx="${x+9}" cy="252" r="3" fill="#2B2440"/>
+    <path d="M${x-7} 261 q7 7 14 0" stroke="#2B2440" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+  });
+  const notes=[[40,40],[560,52],[120,150],[480,160],[300,170],[30,200],[570,210]]
+    .map(([x,y],i)=>`<text x="${x}" y="${y}" font-size="22" fill="${STAFF[i%6].color}" opacity=".8">♪</text>`).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="600" height="400">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A2F66"/><stop offset="1" stop-color="#12152E"/></linearGradient>
+    <radialGradient id="sp" cx=".5" cy="0" r=".9"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    <filter id="g"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <rect width="600" height="400" fill="url(#bg)"/>
+  <rect width="600" height="400" fill="url(#sp)"/>
+  ${notes}
+  <text x="300" y="112" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="58" fill="#fff">ありがとう！</text>
+  ${figs}
+  <rect y="366" width="600" height="34" fill="#0B0D20"/>
+  <text x="300" y="389" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="16" fill="#fff">音遊会 スタッフ一同</text>
+</svg>`;
+}
+document.documentElement.style.setProperty('--img',
+  `url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(finalSVG())}")`);
+
+/* --- render --- */
+function render(justIdx){
+  const board=$('board'); board.innerHTML='';
+  STAFF.forEach((s,i)=>{
+    const t=document.createElement('div');
+    const col=i%3,row=Math.floor(i/3);
+    t.className='tile'+(state.got.includes(s.code)?' got':'')+(i===justIdx?' just':'');
+    t.style.setProperty('--c',s.color);
+    t.style.setProperty('--pos',`${col*50}% ${row*100}%`);
+    const q=document.createElement('div');
+    q.innerHTML='<div class="q">?</div>';
+    const w=document.createElement('div'); w.className='who'; w.textContent=s.name;
+    q.appendChild(w); t.appendChild(q);
+    board.appendChild(t);
+  });
+  const n=state.got.length, complete=n===STAFF.length;
+  board.classList.toggle('complete',complete);
+  $('status').textContent = complete ? '6人全員見つけました！' : `6人中 ${n}人 見つけた（あと${6-n}人）`;
+
+  const ul=$('lights'); ul.innerHTML='';
+  STAFF.forEach(s=>{
+    const li=document.createElement('li');
+    li.className=state.got.includes(s.code)?'on':'';
+    li.style.setProperty('--c',s.color);
+    li.innerHTML='<span class="stick"></span>';
+    li.append(s.name);
+    ul.appendChild(li);
+  });
+
+  $('done').classList.toggle('show',complete);
+  if(complete){
+    if(!state.no){state.no=SAMPLE_WALL.length+1; save(KEY,state);}
+    $('doneNo').textContent=`あなたは ${state.no} 人目のコンプリートです。`;
+    if(state.posted){
+      $('formWrap').innerHTML='<p class="posted">足あとを残しました。ありがとう！</p>';
+    }
+  }
+  $('cnt').textContent = SAMPLE_WALL.length + (complete?1:0);
+}
+
+/* --- collect a piece --- */
+function collect(code){
+  const i=STAFF.findIndex(s=>s.code===code);
+  if(i<0){toast('このQRコードは読み取れませんでした。スタッフに声をかけてね');return}
+  const s=STAFF[i];
+  if(state.got.includes(code)){toast(`${s.name}のピースはもう持っています`);return}
+  state.got.push(code); save(KEY,state);
+  render(i);
+  const n=state.got.length;
+  $('dlgLight').style.setProperty('--c',s.color);
+  $('dlgTitle').textContent=`${s.name}を見つけた！`;
+  $('dlgMsg').textContent=s.msg;
+  $('dlgProg').textContent= n===6 ? 'これで6枚そろいました！' : `ピース ${n} / 6`;
+  $('dlgClose').textContent= n===6 ? '完成した絵を見る' : 'ボードを見る';
+  $('getDlg').showModal();
+}
+$('dlgClose').onclick=()=>{
+  $('getDlg').close();
+  if(state.got.length===6){celebrate(); $('board').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'})}
+};
+
+function celebrate(){
+  if(reduce) return;
+  const box=document.createElement('div'); box.className='confetti';
+  for(let k=0;k<70;k++){
+    const p=document.createElement('i');
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=STAFF[k%6].color;
+    p.style.animationDuration=(2+Math.random()*2)+'s';
+    p.style.animationDelay=(Math.random()*.6)+'s';
+    box.appendChild(p);
+  }
+  document.body.appendChild(box);
+  setTimeout(()=>box.remove(),5000);
+}
+
+let tt;
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),2600)}
+
+/* --- footprints --- */
+$('postBtn').onclick=()=>{
+  const name=$('nm').value.trim()||'名無しさん';
+  const msg=$('ms').value.trim();
+  if(!msg){toast('ひとことを入力してください');$('ms').focus();return}
+  myWall.push({name,msg,mine:true}); save(WALL_KEY,myWall);
+  state.posted=true; save(KEY,state);
+  render();
+  spawn({name,msg,mine:true});
+  if(reduce) buildList();
+  toast('足あとを残しました');
+};
+
+const stage=$('stage');
+function allWall(){return [...myWall,...SAMPLE_WALL]}
+let wi=0, lane=0;
+function spawn(e){
+  const el=document.createElement('span');
+  el.className='cmt'+(e.mine?' mine':'');
+  el.textContent=e.msg;
+  el.style.top=(14+ (lane++%5)*36)+'px';
+  el.style.animationDuration=(8+e.msg.length*.15)+'s';
+  el.addEventListener('animationend',()=>el.remove());
+  stage.appendChild(el);
+}
+function buildList(){
+  stage.innerHTML='';
+  const ul=document.createElement('ul'); ul.className='stage-list';
+  allWall().forEach(e=>{const li=document.createElement('li');li.textContent=`${e.name}：${e.msg}`;ul.appendChild(li)});
+  stage.appendChild(ul);
+}
+if(reduce){buildList()}
+else{
+  const tick=()=>{const w=allWall(); spawn(w[wi++%w.length])};
+  tick(); setInterval(tick,1500);
+}
+
+/* --- prototype panel --- */
+STAFF.forEach(s=>{
+  const b=document.createElement('button');
+  b.className='ghost'; b.type='button';
+  b.style.borderColor=s.color;
+  b.textContent=`${s.name}のQR`;
+  b.onclick=()=>collect(s.code);
+  $('protoBtns').appendChild(b);
+});
+$('resetBtn').onclick=()=>{
+  state={id:newId(),got:[]}; myWall=[];
+  save(KEY,state); save(WALL_KEY,myWall);
+  location.reload();
+};
+$('urlEx').textContent='https://（サイトのURL）/?s='+STAFF[0].code;
+
+/* --- 起動：URLにコードがあれば読み取り扱い --- */
+render();
+(function(){
+  let code=null;
+  try{code=new URLSearchParams(location.search).get('s')||(location.hash.slice(1)||null)}catch(e){}
+  if(code){
+    try{history.replaceState(null,'',location.pathname)}catch(e){}
+    setTimeout(()=>collect(code),300);
+  }
+})();
+</script>
+</body>
+</html>
