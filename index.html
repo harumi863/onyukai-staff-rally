@@ -409,6 +409,19 @@ $('resetBtn').onclick=()=>{
 };
 $('urlEx').textContent='https://（サイトのURL）/?s='+STAFF[0].code;
 
+/* --- 複数タブの同期：他のタブで進んだら、このタブも最新にする --- */
+function syncFromStorage(){
+  const s=load(KEY,null);
+  if(!s) return;
+  s.got ||= [];
+  state=s;
+  myWall=load(WALL_KEY,[]);
+  render();
+}
+window.addEventListener('storage',e=>{ if(e.key===KEY||e.key===WALL_KEY) syncFromStorage(); });
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) syncFromStorage(); });
+window.addEventListener('pageshow',e=>{ if(e.persisted) syncFromStorage(); });
+
 /* --- 起動：URLにコードがあれば読み取り扱い --- */
 render();
 (function(){
